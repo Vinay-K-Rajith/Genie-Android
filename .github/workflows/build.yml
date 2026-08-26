@@ -16,5 +16,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: android-actions/setup-android@v3
-      - run: chmod +x ./gradlew
-      - run: ./gradlew :phdwidget:assembleRelease :sample:assembleDebug lint
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.13
+      - run: gradle :phdwidget:assembleRelease :sample:assembleDebug lint
