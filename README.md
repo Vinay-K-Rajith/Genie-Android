@@ -1,9 +1,7 @@
-# PHD Android Widget
+# Genie Android Chatbot SDK
 
-Native Android host for the Genie Parent Help Desk web widget. Ships as a small Gradle
-library (`phdwidget`) that wraps the same `inject.js` widget used on the web in a `WebView`,
-exposed as a Jetpack Compose composable and a plain `View`. No native reimplementation of the
-chat flow — the web widget stays the single source of truth.
+Native Android host for the Genie Parent Help Desk chatbot. Ships as a small Gradle library
+(`phdwidget`), exposed as a Jetpack Compose composable and a plain `View`.
 
 ## Install
 
