@@ -21,9 +21,14 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.<org>:phd-android-sdk:<version>")
+    implementation("com.github.Vinay-K-Rajith.Genie-Android:phdwidget:<version>")
 }
 ```
+
+`<version>` is a [release tag](https://github.com/Vinay-K-Rajith/Genie-Android/releases) of
+this repo (or a commit hash, e.g. `e88f3de`, for an unreleased build). This is a multi-module
+repo, so the group id is `com.github.<user>.<repo>` and `phdwidget` is the artifact — not
+`com.github.<user>:<repo>` as for a single-module repo.
 
 ## Usage
 
