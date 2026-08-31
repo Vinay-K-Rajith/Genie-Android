@@ -1,7 +1,14 @@
 # Genie Android Chatbot SDK
 
 Native Android host for the Genie Parent Help Desk chatbot. Ships as a small Gradle library
-(`phdwidget`), exposed as a Jetpack Compose composable and a plain `View`.
+(`phdwidget`) with two integration shapes:
+
+- **`PhdChatActivity`** — launch it and it owns its whole screen, including Back and closing,
+  the same way Yellow.ai's own SDK launches a dedicated Activity. No lifecycle glue required.
+  Use this unless you have a specific reason not to.
+- **`PhdWidget`** — a Jetpack Compose composable (or `PhdWidgetView` for the plain `View`
+  system) for overlaying chat inside an existing screen. You own mounting/unmounting and must
+  react to `Close` yourself — see **Touch handling** and **Events** below.
 
 ## Install
 
@@ -30,6 +37,16 @@ repo, so the group id is `com.github.<user>.<repo>` and `phdwidget` is the artif
 
 ## Usage
 
+Recommended — launch the chat as its own screen, same as `startActivity` for any other screen:
+
+```kotlin
+PhdChatActivity.start(context, PhdWidgetConfig(schoolCode = schoolCode))
+```
+
+Back, close, and load-failure retry are all handled internally. Nothing else to wire up.
+
+Alternative — embed inline (e.g. a persistent support FAB over live content):
+
 ```kotlin
 @Composable
 fun SupportScreen(schoolCode: String) {
@@ -43,13 +60,14 @@ fun SupportScreen(schoolCode: String) {
 }
 ```
 
-See [`sample/`](sample) for a full example, including the on-demand mount/unmount pattern
-required when overlaying the widget on an existing screen (see **Touch handling** below).
+See [`sample/`](sample) for a full example of the inline pattern, including the on-demand
+mount/unmount required when overlaying the widget on an existing screen (see **Touch handling**
+below).
 
-`PhdWidgetConfig.autoOpen` defaults to `true`: since mounting this composable is already the
-user's "open chat" tap, the panel opens immediately instead of requiring a second tap on the
-widget's own internal fab. Pass `autoOpen = false` to keep the widget's admin-configured
-default instead (e.g. a persistent, always-mounted embed).
+`PhdWidgetConfig.autoOpen` defaults to `true`: since launching/mounting is already the user's
+"open chat" tap, the panel opens immediately instead of requiring a second tap on the widget's
+own internal fab. Pass `autoOpen = false` to keep the widget's admin-configured default instead
+(e.g. a persistent, always-mounted embed).
 
 ## Requirements
 

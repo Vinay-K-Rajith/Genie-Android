@@ -27,9 +27,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.entab.phdwidget.PhdChatActivity
 import com.entab.phdwidget.PhdWidget
 import com.entab.phdwidget.PhdWidgetConfig
 import com.entab.phdwidget.PhdWidgetEvent
@@ -56,6 +58,7 @@ class MainActivity : ComponentActivity() {
  */
 @Composable
 private fun LoginScreenWithChat() {
+    val context = LocalContext.current
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showChat by remember { mutableStateOf(false) }
@@ -90,6 +93,15 @@ private fun LoginScreenWithChat() {
 
             Button(onClick = { /* your auth flow */ }, modifier = Modifier.fillMaxWidth()) {
                 Text("Log in")
+            }
+
+            // Recommended path: launches PhdChatActivity as its own screen. Back and close
+            // are handled internally — no onEvent wiring needed, unlike the inline FAB below.
+            Button(
+                onClick = { PhdChatActivity.start(context, PhdWidgetConfig(schoolCode = "DEMO_SCHOOL")) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Open chat in dedicated screen")
             }
         }
 
