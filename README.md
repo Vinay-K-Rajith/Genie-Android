@@ -40,6 +40,11 @@ fun SupportScreen(schoolCode: String) {
 See [`sample/`](sample) for a full example, including the on-demand mount/unmount pattern
 required when overlaying the widget on an existing screen (see **Touch handling** below).
 
+`PhdWidgetConfig.autoOpen` defaults to `true`: since mounting this composable is already the
+user's "open chat" tap, the panel opens immediately instead of requiring a second tap on the
+widget's own internal fab. Pass `autoOpen = false` to keep the widget's admin-configured
+default instead (e.g. a persistent, always-mounted embed).
+
 ## Requirements
 
 - `minSdk 24`+

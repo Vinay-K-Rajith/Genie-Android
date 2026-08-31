@@ -3,6 +3,7 @@ package com.entab.phdwidget
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.net.Uri
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.webkit.WebResourceError
@@ -17,7 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import org.json.JSONObject
+import androidx.core.view.doOnNextLayout
 
 /** Configuration for a single PHD widget instance. Only [schoolCode] is normally required. */
 data class PhdWidgetConfig(
@@ -25,6 +26,12 @@ data class PhdWidgetConfig(
     val host: String = "https://genie.globalmetaldirect.com",
     val extraConfig: Map<String, String> = emptyMap(),
     val handleBackNavigation: Boolean = true,
+    /** Opens the chat panel immediately on load instead of the widget's own minimised fab.
+     *  Defaults to true: mounting this composable is already the user's "open chat" tap
+     *  (see the on-demand mount pattern), so a second tap on an internal fab is redundant.
+     *  Set to false to keep the widget's admin-configured default (e.g. a persistent, always-
+     *  mounted embed rather than the recommended on-demand one). */
+    val autoOpen: Boolean = true,
 )
 
 /** Lifecycle events surfaced by the widget. Always handle [Failed] — without it a load
@@ -77,11 +84,21 @@ class PhdWidgetView @JvmOverloads constructor(
                     }
                 }
             }
-            loadDataWithBaseURL(config.host, buildHtml(config), "text/html", "utf-8", null)
         }
 
         webView = wv
         addView(wv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+
+        val url = buildAppUrl(config)
+        // The panel resolves CSS viewport units (svh) against whatever height the WebView is
+        // measured at on first layout. If load() runs before this view has been laid out
+        // (e.g. from a DisposableEffect that races the first Compose pass), that height is 0
+        // and the result is baked in permanently — reloading the WebView does not recover it.
+        if (width > 0 && height > 0) {
+            wv.loadUrl(url)
+        } else {
+            doOnNextLayout { wv.loadUrl(url) }
+        }
     }
 
     /** Tears down the WebView and its JS/network context. Call when the widget should close. */
@@ -98,28 +115,14 @@ class PhdWidgetView @JvmOverloads constructor(
         super.onDetachedFromWindow()
     }
 
-    private fun buildHtml(config: PhdWidgetConfig): String {
-        val cfgJson = JSONObject().apply {
-            put("host", config.host)
-            put("schoolCode", config.schoolCode)
-            config.extraConfig.forEach { (k, v) -> put(k, v) }
-        }.toString()
-
-        return """
-            <!doctype html>
-            <html>
-            <head><style>html,body{margin:0;padding:0;background:transparent}</style></head>
-            <body>
-              <script>
-                window.phdWidgetConfig = $cfgJson;
-                var s = document.createElement('script');
-                s.src = '${config.host}/phd-widget/inject.js';
-                s.async = true;
-                document.body.appendChild(s);
-              </script>
-            </body>
-            </html>
-        """.trimIndent()
+    /** Real HTTP page served by the host — a proper document lifecycle and viewport meta tag
+     *  from first paint, unlike loadDataWithBaseURL()'s injected data: string. */
+    private fun buildAppUrl(config: PhdWidgetConfig): String {
+        val builder = Uri.parse("${config.host}/phd-widget/app").buildUpon()
+            .appendQueryParameter("schoolCode", config.schoolCode)
+            .appendQueryParameter("autoOpen", config.autoOpen.toString())
+        config.extraConfig.forEach { (k, v) -> builder.appendQueryParameter(k, v) }
+        return builder.build().toString()
     }
 }
 
