@@ -130,6 +130,11 @@ class PhdWidgetView @JvmOverloads constructor(
  * Jetpack Compose entry point. Mounts a [PhdWidgetView] for as long as this composable is
  * present in the tree — callers control on-demand mounting by conditionally including this
  * composable, not by hiding/showing it internally.
+ *
+ * You MUST handle [PhdWidgetEvent.Close] in [onEvent] (stop including this composable, e.g.
+ * flip the boolean that guards it — see the sample app). Back navigation is implemented by
+ * emitting [PhdWidgetEvent.Close], not by unmounting internally: if [onEvent] ignores it, the
+ * system Back button will appear to do nothing while the widget is open.
  */
 @Composable
 fun PhdWidget(

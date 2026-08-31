@@ -36,6 +36,9 @@ fun SupportScreen(schoolCode: String) {
     PhdWidget(
         config = PhdWidgetConfig(schoolCode = schoolCode),
         modifier = Modifier.fillMaxSize(),
+        // Required: PhdWidget does not unmount itself. If you don't stop rendering it here,
+        // system Back will appear to do nothing while the widget is open — see Events below.
+        onEvent = { if (it is PhdWidgetEvent.Close) navController.popBackStack() },
     )
 }
 ```
@@ -89,11 +92,14 @@ permanently, and reloading will not recover it.
 | Event     | Emitted when |
 |-----------|--------------|
 | `Ready`   | Script loaded, chat surface interactive |
-| `Close`   | User dismissed the panel, or Back was pressed with no widget history left |
+| `Close`   | User tapped the panel's close button, or pressed system Back |
 | `Failed`  | Script could not load — no network, TLS rejected, wrong host, or host down |
 | `Message` | Widget posted a message over the JS bridge |
 
-Always handle `Failed` — without it a load failure leaves the user on a blank view.
+Always handle both `Close` and `Failed`. `Close` is not handled internally — Back is
+implemented by emitting the event, not by unmounting the widget itself. If `onEvent` ignores
+`Close`, Back will appear to do nothing while the widget is open. `Failed` unhandled leaves the
+user on a blank view after a load failure.
 
 ## Release builds
 
