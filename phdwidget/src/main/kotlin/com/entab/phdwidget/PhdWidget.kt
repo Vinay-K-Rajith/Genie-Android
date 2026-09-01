@@ -4,8 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.ViewGroup
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -34,10 +37,13 @@ data class PhdWidgetConfig(
     val autoOpen: Boolean = true,
 )
 
-/** Lifecycle events surfaced by the widget. Always handle [Failed] — without it a load
- *  failure leaves the user on a blank view with no explanation. */
+/** Lifecycle events surfaced by the widget. Always handle [Close] and [Failed]: [Close] is not
+ *  handled internally — [PhdWidget]/[PhdWidgetView] do not unmount themselves, so an [onEvent]
+ *  callback that ignores it leaves both the widget's own close button and system Back doing
+ *  nothing visible. [Failed] left unhandled leaves the user on a blank view with no explanation. */
 sealed class PhdWidgetEvent {
     data object Ready : PhdWidgetEvent()
+    /** Emitted when the user taps the widget's own close button, or presses system Back. */
     data object Close : PhdWidgetEvent()
     data class Failed(val description: String) : PhdWidgetEvent()
     data class Message(val payload: String) : PhdWidgetEvent()
@@ -59,7 +65,19 @@ class PhdWidgetView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs) {
 
     private var webView: WebView? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
     var onEvent: ((PhdWidgetEvent) -> Unit)? = null
+
+    /** Bridged into the page as `window.PhdNativeBridge`. The widget's own close button only
+     *  runs client-side JS (`_setOpen(false)`) — without this, native never learns the user
+     *  closed via the widget's UI (as opposed to system Back), so the host never unmounts and
+     *  the full-bounds WebView keeps intercepting touches behind an invisible panel. */
+    private inner class NativeBridge {
+        @JavascriptInterface
+        fun onClose() {
+            mainHandler.post { onEvent?.invoke(PhdWidgetEvent.Close) }
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     fun load(config: PhdWidgetConfig) {
@@ -85,6 +103,8 @@ class PhdWidgetView @JvmOverloads constructor(
                 }
             }
         }
+
+        wv.addJavascriptInterface(NativeBridge(), "PhdNativeBridge")
 
         webView = wv
         addView(wv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
