@@ -121,6 +121,11 @@ Always size the widget `fillMaxSize()` / `MATCH_PARENT`. The panel resolves CSS 
 (`svh`) against the height it's measured at on first layout; a zero-height parent collapses it
 permanently, and reloading will not recover it.
 
+On phone-sized screens the chat panel takes over the full `WebView` (no floating card, no
+corner fab) instead of the small desktop-style popup — this is server-side behavior, not
+something you configure here. `fillMaxSize()` / `MATCH_PARENT` above is still required so the
+`WebView` itself has the full screen available to fill.
+
 ## Events
 
 | Event     | Emitted when |
