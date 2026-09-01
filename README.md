@@ -64,6 +64,22 @@ See [`sample/`](sample) for a full example of the inline pattern, including the 
 mount/unmount required when overlaying the widget on an existing screen (see **Touch handling**
 below).
 
+Not using Compose? `PhdWidgetView` is the plain-`View` equivalent of `PhdWidget`. As its own
+full-screen Activity, system Back finishes it for free (default Activity behavior); you still
+need to call `finish()` yourself on `Close`, since the widget's own close button doesn't:
+
+```kotlin
+class SupportActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val widget = PhdWidgetView(this)
+        setContentView(widget)
+        widget.onEvent = { if (it is PhdWidgetEvent.Close) finish() }
+        widget.load(PhdWidgetConfig(schoolCode = schoolCode))
+    }
+}
+```
+
 `PhdWidgetConfig.autoOpen` defaults to `true`: since launching/mounting is already the user's
 "open chat" tap, the panel opens immediately instead of requiring a second tap on the widget's
 own internal fab. Pass `autoOpen = false` to keep the widget's admin-configured default instead
